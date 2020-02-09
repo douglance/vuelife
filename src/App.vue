@@ -1,29 +1,45 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+  <div id="app" class="grid">
+    <div
+      v-for="pos in board.positions"
+      @click="board.tick()"
+      :key="`tile-${pos.x}-${pos.y}`"
+      :style="{
+        'grid-column': `${pos.x}/${pos.x + 1}`,
+        'grid-row': `${pos.y}/${pos.y + 1}`,
+        width: '100%',
+        height: '100%'
+      }"
+    >
+      <Organism :entity="board.getEntityForPosition(pos)" />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import HelloWorld from "./components/HelloWorld.vue";
+import Organism from "./components/Organism.vue";
+import { Board } from "./entities";
+// import CONSTANTS from "./constants";
 
 @Component({
   components: {
-    HelloWorld
+    Organism
   }
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  board = new Board();
+}
 </script>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+<style>
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  padding: 0;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
 }
 </style>
