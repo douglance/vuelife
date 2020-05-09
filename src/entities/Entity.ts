@@ -10,14 +10,20 @@ export class Entity {
   age: number;
   power: number;
   dna: string;
-  red = Math.random() * 255;
-  green = Math.random() * 255;
-  blue = Math.random() * 255;
+  red: number;
+  green: number;
+  blue: number;
 
-  color = `RGB(${this.red}, ${this.green}, ${this.blue})`;
+  color: string;
 
-  constructor(position: Position, board: Board) {
-    const random = () => Math.round(Math.random() * 25);
+  constructor(
+    position: Position,
+    board: Board,
+    red?: number,
+    blue?: number,
+    green?: number
+  ) {
+    const random = () => Math.round(Math.random() * 255);
     this.position = position;
     this.board = board;
     this.energy = random();
@@ -27,26 +33,14 @@ export class Entity {
       .toString(36)
       .substring(7);
     this.direction = Math.round(Math.random() * 3);
+    this.red = red ?? Math.random() * 255;
+    this.blue = blue ?? Math.random() * 255;
+    this.green = green ?? Math.random() * 255;
+    this.color = `RGB(${this.red}, ${this.green}, ${this.blue})`;
   }
 
   tick() {
     setInterval(this.takeAction.bind(this), 100);
-  }
-
-  shouldRest() {
-    return this.energy < 5;
-  }
-  shouldEat() {
-    return this.position.resources > 0;
-  }
-  shouldAttack() {
-    return this.power > 0;
-  }
-  shouldDefend() {
-    return this.energy < this.power;
-  }
-  shouldMate() {
-    return this.energy > 10;
   }
 
   getAction(): ACTIONS {
@@ -66,6 +60,22 @@ export class Entity {
       return ACTIONS.MATE;
     }
     return ACTIONS.REST;
+  }
+
+  shouldRest() {
+    return this.energy < 5;
+  }
+  shouldEat() {
+    return this.position.resources > 0;
+  }
+  shouldAttack() {
+    return this.nearbyEnemies() && this.power > 100;
+  }
+  shouldDefend() {
+    return this.nearbyEnemies() && this.energy < 100;
+  }
+  shouldMate() {
+    return this.energy > 10;
   }
 
   takeAction() {
@@ -88,11 +98,6 @@ export class Entity {
     }
   }
 
-  convert(entity: Entity) {
-    entity.dna = this.dna;
-    entity.color = this.color;
-  }
-
   eat() {
     const resources = Math.round(this.position.resources / 2);
     this.energy = this.energy + resources;
@@ -109,13 +114,19 @@ export class Entity {
     if (this.targetEntity) {
       if (this.targetEntity.getAction() === ACTIONS.DEFEND) {
         return;
-      } else {
+      } else if (this.power > this.targetEntity.power) {
         this.targetEntity.energy -= 2;
         if (this.targetEntity.energy < 0) {
           this.convert(this.targetEntity);
         }
       }
     }
+  }
+
+  convert(entity: Entity) {
+    entity.dna = this.dna;
+    entity.color = this.color;
+    entity.power = this.power;
   }
 
   defend() {
@@ -127,20 +138,22 @@ export class Entity {
     if (this.targetEntity) {
       if (
         this.targetEntity.getAction() === ACTIONS.MATE &&
-        this.compareColors(this.targetEntity)
+        this.compatibleMate(this.targetEntity)
       ) {
         this.power += 1;
         this.targetEntity.power += 1;
+        this.age = 0;
+        this.targetEntity.age = 0;
       }
     }
   }
 
   get targetEntity(): Entity | undefined {
-    return this.board.getEntityForCoords(this.facingCoords);
+    return this.board.getEntityForCoords(this.facingCoords(this.direction));
   }
 
-  get facingCoords(): Coords {
-    switch (this.direction) {
+  facingCoords(direction: Direction): Coords {
+    switch (direction) {
       case Direction.NORTH:
         return this.position.northCoords;
       case Direction.EAST:
@@ -152,7 +165,27 @@ export class Entity {
     }
   }
 
-  compareColors(targetEntity: Entity) {
+  nearbyEnemies() {
+    const surroundingCoords = [
+      this.facingCoords(Direction.NORTH),
+      this.facingCoords(Direction.EAST),
+      this.facingCoords(Direction.SOUTH),
+      this.facingCoords(Direction.WEST)
+    ];
+    let enemies = true;
+    surroundingCoords.forEach(coords => {
+      const otherEntity = this.board.getEntityForCoords(coords);
+      console.log(otherEntity);
+      if (otherEntity && this.compatibleMate(otherEntity)) {
+        enemies = false;
+      } else {
+        enemies = true;
+      }
+    });
+    return enemies;
+  }
+
+  compatibleMate(targetEntity: Entity) {
     const range = 50;
     return (
       Numbers.withinRange(

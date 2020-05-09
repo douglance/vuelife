@@ -6,11 +6,12 @@
     @mouseover="hover = true"
     @mouseleave="hover = false"
   >
-    <fa icon="arrow-up" class="arrow" v-if="direction === DIRECTION.NORTH" />
+    <!-- <fa icon="arrow-up" class="arrow" v-if="direction === DIRECTION.NORTH" />
     <fa icon="arrow-right" class="arrow" v-if="direction === DIRECTION.EAST" />
     <fa icon="arrow-down" class="arrow" v-if="direction === DIRECTION.SOUTH" />
-    <fa icon="arrow-left" class="arrow" v-if="direction === DIRECTION.WEST" />
+    <fa icon="arrow-left" class="arrow" v-if="direction === DIRECTION.WEST" /> -->
     <span>{{ entity.dna }}</span>
+    <p>{{ entity.nearbyEnemies() }}</p>
     <div style="font-size:24px;">
       <p v-if="entity.getAction() === ACTIONS.REST">😴</p>
       <p v-if="entity.getAction() === ACTIONS.ATTACK">👊</p>

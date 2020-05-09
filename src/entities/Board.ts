@@ -54,7 +54,7 @@ export class Board {
   }
 
   getFacingEntity(entity: Entity): Entity | undefined {
-    const facing = entity.facingCoords;
+    const facing = entity.facingCoords(entity.direction);
     const pos = this.getPositionForCoords(facing);
     if (pos) {
       return this.getEntityForPosition(pos);
